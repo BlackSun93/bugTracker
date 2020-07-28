@@ -1,0 +1,10 @@
+{% extends "bugtrack/layout.html" %}
+{% block body %}
+<p>Detailed view of a bug, i imagine clicking a bug on the homepage will go to this screen</P>
+<p> from here users will be able to commit to solving the bug</p>
+<p>if this user is this bug's solver, show functionality for posting updates or changing bug's status? </p>
+<p>or different html for solver? I think i'll try to implement it all on this html for now and split if needed</p>
+
+{{bug.id}}, {{bug.title}}, {{bug.description}}
+
+{% endblock%}

@@ -1,0 +1,47 @@
+{% extends "bugtrack/layout.html" %}
+{% load static %}
+
+{% block body%}
+
+<h2> This will be the homepage kind of deal </h2>
+
+<p> Will show list of most recent problems and maybe most recently solved? </p>
+
+<p> also provide some functionality for posting a problem </p>
+<p> separate html for problem posting? maybe generate a django form class for it </p>
+
+
+<p> report a bug </p>
+
+ <div id="bugReport">
+        <h3>Report a bug</h3>
+        <form id="bugReportForm"> 
+            <div class="form-group">
+                Title (short description of bug): <input id='bugTitle' class="form-control">
+            </div>
+            <div class='form-group'>
+            <select id='bugPriority' class='form-group' size='1'>
+            
+            <option value = 'low'>low </option>
+            <option value = 'med'>med </option>
+            <option value = 'high'>high </option>
+            </select>
+            </div>
+            <div class="form-group">
+                Location: <input class="form-control" id="bugLocation" placeholder="Where was this bug enountered?">
+            </div>
+            <textarea class="form-control" id="bugDesc" placeholder="Detailed description of bug"></textarea>
+            <input type="submit" class="btn btn-primary"/>
+        </form>
+    </div>
+
+{% for bug in bugList%} <!Probably want this to be some kind of table to ensure information is separated neatly and is readable>
+
+  <p>  <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} {{bug.title}}  {{bug.location}} {{bug.priority}} {{bug.status}}</a> </p>
+
+{% endfor %}
+
+{% endblock %}
+{% block script %}
+<script src="{% static 'bugtrack/main.js' %}"></script>
+{% endblock %}
