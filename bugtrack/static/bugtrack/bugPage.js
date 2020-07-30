@@ -4,7 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
     bugInfo = bugElement.dataset.bug;
     //bugJson = JSON.parse(bugJson);
     console.log(bugJson);
-    document.getElementById('updateForm').onsubmit = createUpdate;
+    try {
+        document.getElementById('updateForm').onsubmit = createUpdate;
+    }
+    catch {
+        console.log('update form is not here');
+    }
+    
     
 });
 

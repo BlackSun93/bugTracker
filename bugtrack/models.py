@@ -14,11 +14,13 @@ class User(AbstractUser):
         }   
 
 class Bug (models.Model):
-    status = models.CharField(max_length=50) #will be in 1 of 5 states, unclaimed, claimed, processing, testing, closed
+    poster =  models.ForeignKey("User", on_delete=models.PROTECT,  related_name='bugPoster') #I dont want the poster to be able to be deleted if bug open
+    status = models.CharField(max_length=50) #will be in 1 of 5 states, unclaimed, claimed, processing, testing, solved
     priority = models.CharField(max_length=10) #so the user can give the bug a presumed priority (low, med, high)
     title = models.CharField(max_length=50) #brief description of the bug 
     description = models.CharField(max_length=500) # full description of the issue
     location = models.CharField( max_length=50) #where the issue is located (file, program)
+    updates     = models.ManyToManyField("Update", related_name='bugUpdate') #should allow many updates to made by one solver
     fix = models.CharField(max_length=500, blank=True, null=True)
     created     = models.DateTimeField(editable=False)
     modified    = models.DateTimeField( blank=True, null=True)
@@ -77,13 +79,13 @@ class Follow (models.Model): #gives a relationship between a user and the bugs t
 
 
 class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they are solving, only 1 user per bug
-    user        = models.ForeignKey("User", on_delete=models.CASCADE, related_name='solverUser')
+    user        = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, related_name='solverUser')
     bug         = models.ForeignKey("Bug",  on_delete=models.CASCADE, related_name='solverBug')
     created     = models.DateTimeField(editable=False)
     modified    = models.DateTimeField()
     action      = models.CharField(max_length=500, blank=True, null=True) #field to allow a bug fix to be supplied, allowing it as null here but expect a
                                                                 #check in html to not actually pass a blank value (this is the fix so why is it null?)
-    updates     = models.ManyToManyField("Update", related_name='solverUpdate') #should allow many updates to made by one solver
+    
     result      = models.CharField(max_length=500, blank=True, null=True) #result can be blank in case of awaiting result/ etc
 
     def __str__(self):

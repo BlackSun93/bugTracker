@@ -15,7 +15,8 @@ from .models import *
 def index(request): 
     #default view should display all the bugs, so I will get them here and pass them into index.html
     #need to exclude bugs that have been taken on by someone (to prevent multiple users takng them on)
-    bugList = Bug.objects.all().order_by('-id') #order bugs by reverse id (newest bugs first)
+    bugList = Bug.objects.all().order_by('-id') #order bugs by reverse id (newest bugs first) needs to exclude solved bugs
+    solvedBugsForUserReview = Bug.objects.filter(status = 'solved', )
     return render(request, "bugtrack/index.html", {
         "bugList": bugList
     })
@@ -86,7 +87,7 @@ def createBug(request):
     bugLocation = data.get('location')
     bugDesc = data.get('description')
     bugPriority=data.get('priority')
-    newBug = Bug(title=bugTitle, location = bugLocation, description = bugDesc, priority = bugPriority, status = "unclaimed")
+    newBug = Bug(title=bugTitle, location = bugLocation, description = bugDesc, priority = bugPriority, status = "unclaimed", poster = request.user)
     
     newBug.save()
     #print(Bug.objects.all()) commented out because it is showing new bugs as they're created
@@ -94,24 +95,29 @@ def createBug(request):
 
 def bugPage (request, bugId):
     thisBug = Bug.objects.get(id=bugId)
+    updates = thisBug.updates.all().order_by('-id')
+    print(thisBug.updates)
+    print(updates)
     
     if thisBug.solverBug.exists(): #if this bug has a solver, pass solver info into the template
         solver = thisBug.solverBug.get() #get solver object
         solver = solver.serialiseSolver() #JSON it
-        jsBug = thisBug.serialiseBug() #JSON the bug
-        jsBug = json.dumps(jsBug, default=str)
-        print(thisBug.bugSolver)
-        return render(request, "bugtrack/bugPage.html", {
-        "bug": thisBug, "jsBug":jsBug,  "solver" : solver
+    else:
+        solver = None
+    jsBug = thisBug.serialiseBug() #JSON the bug
+    jsBug = json.dumps(jsBug, default=str)
+    print(thisBug.bugSolver)
+    return render(request, "bugtrack/bugPage.html", {
+        "bug": thisBug, "jsBug":jsBug,  "solver" : solver, "updates": updates
     })
 
-    else: #if this bug doesn't have a solver yet
-        jsBug = thisBug.serialiseBug()
-        jsBug = json.dumps(jsBug, default=str)
+    #else: #if this bug doesn't have a solver yet
+    #    jsBug = thisBug.serialiseBug()
+    #    jsBug = json.dumps(jsBug, default=str)
      
-        return render(request, "bugtrack/bugPage.html", {
-        "bug": thisBug, "jsBug": jsBug #JsonResponse([thisBug.serialiseBug()], safe=False)# #bug is the bug object from the DB, jsBug is a json representation (no desc)
-        })
+    #    return render(request, "bugtrack/bugPage.html", {
+    #    "bug": thisBug, "jsBug": jsBug #JsonResponse([thisBug.serialiseBug()], safe=False)# #bug is the bug object from the DB, jsBug is a json representation (no desc)
+    #    })
 @csrf_exempt
 def newSolver (request):
     if  request.method != 'POST':
@@ -144,19 +150,32 @@ def newUpdate(request): #update has to create new update object, add update to s
     thisSolver = Solver.objects.get(user = request.user) #get the user who has posted the update
     thisBug = thisSolver.bug #get the bug the update is being posted on
     ##### UPDATE OBJECTS ######
+    #addUpdate(newUpdate, thisBug, thisSolver)
+    newUpdate = Update(solver = thisSolver, text = update) #create update object
+    newUpdate.save()
+    thisBug.status = newStatus #updates the bug's status as per the dropdown menu
+    thisBug.updates.add(newUpdate) #adds update to the solver object, should add updates to the bug 
+    thisBug.save()
     if newStatus == 'solved':
         
+        thisSolver.result = 'solved'
+        thisUser = thisSolver.user
+        thisUser.solved += 1 #increment user's solved bug count
+        thisUser.save()
+        return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
 
     else:
-        thisBug.status = newStatus #updates the bug's status as per the dropdown menu
-        thisBug.save()
-        newUpdate = Update(solver = thisSolver, text = update) #create update object
-        newUpdate.save()
         print(newUpdate)
-        thisSolver.updates.add(newUpdate) #adds update to the solver object, should add updates to the bug 
-        thisSolver.save()
-        print(thisSolver.updates.all())
+        print(thisBug.updates.all())
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
+
+#### function to take an update, a bug, save the update and it it to the bug ##### MAKE SURE THI WORKS
+#def addUpdate(newUpdate, thisBug, thisSolver):
+   
+   # return print (newUpdate.id + " update added")
+
+#def hello(word):
+#    return print(word)
 
     
 
