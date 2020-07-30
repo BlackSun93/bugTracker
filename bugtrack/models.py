@@ -19,11 +19,13 @@ class Bug (models.Model):
     title = models.CharField(max_length=50) #brief description of the bug 
     description = models.CharField(max_length=500) # full description of the issue
     location = models.CharField( max_length=50) #where the issue is located (file, program)
+    fix = models.CharField(max_length=500, blank=True, null=True)
     created     = models.DateTimeField(editable=False)
     modified    = models.DateTimeField( blank=True, null=True)
     image = models.ImageField() # bootstrap has class img-fluid
     score = models.IntegerField(default=0)
-
+    bugSolver = models.ForeignKey("Solver", on_delete=models.SET_NULL, related_name='bugSolverBug', blank=True, null=True)
+    #if solver is deleted, set it to null
     #no slugfield, being able to make a url based on an issue's id will probably impart as much information to a user as an out of context title
     def __str__(self):
         return f"Bug {self.id}" #short representation because any of these fields could be potentially very long
@@ -40,13 +42,15 @@ class Bug (models.Model):
             "id": self.id,
             "title": self.title,
             "modified": self.modified,
-            "usersOnBug": self.usersOnBug
+            "status": self.status,
+            "priority": self.priority,
+            "solver": self.bugSolver
         }
 
    
 class Comment (models.Model): #1-1 relationship for a user making a comment on a bug
-    user        = models.ForeignKey("User", on_delete=models.PROTECT,  related_name='userComment')
-    bug         = models.ForeignKey("Bug", on_delete=models.CASCADE, related_name='bugComment')
+    user        = models.ForeignKey("User", on_delete=models.SET_NULL,  related_name='userComment', null=True)
+    bug         = models.ForeignKey("Bug", on_delete=models.CASCADE, related_name='bugComment')#if bug is deleted, delete its comments
     comment     = models.CharField(max_length=200)
     timestamp = models.DateTimeField(auto_now_add=True)
     def __str__(self):
@@ -81,6 +85,7 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
                                                                 #check in html to not actually pass a blank value (this is the fix so why is it null?)
     updates     = models.ManyToManyField("Update", related_name='solverUpdate') #should allow many updates to made by one solver
     result      = models.CharField(max_length=500, blank=True, null=True) #result can be blank in case of awaiting result/ etc
+
     def __str__(self):
         return f"Solver {self.user.username} on {self.bug.id} current status: {self.bug.status}"
     def serialiseSolver(self):
@@ -103,10 +108,20 @@ class Update(models.Model): #the Solver will be able to post updates about the b
     timestamp = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"update #{self.id} from {self.solver.user.username} on bug {self.solver.bug.id}"
+    def serialiseUpdate(self):
+        return {
+            "id": self.id,
+            "solver": self.solver.user.username,
+            "text": self.text
+        }
     
 
 class Votes (models.Model): #any user can vote on a bug (either for solution or for urgency? or interest)
     user        = models.ForeignKey("User", on_delete=models.CASCADE, blank=True, null=True)
     bug         = models.ForeignKey("Bug", on_delete=models.CASCADE)
-
+    def serialiseVote(self):
+        return {
+            "user": self.user.username,
+            "bug": self.bug.id
+        }
   

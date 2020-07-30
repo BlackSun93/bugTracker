@@ -94,10 +94,69 @@ def createBug(request):
 
 def bugPage (request, bugId):
     thisBug = Bug.objects.get(id=bugId)
-
-    return render(request, "bugtrack/bugPage.html", {
-        "bug": thisBug
+    
+    if thisBug.solverBug.exists(): #if this bug has a solver, pass solver info into the template
+        solver = thisBug.solverBug.get() #get solver object
+        solver = solver.serialiseSolver() #JSON it
+        jsBug = thisBug.serialiseBug() #JSON the bug
+        jsBug = json.dumps(jsBug, default=str)
+        print(thisBug.bugSolver)
+        return render(request, "bugtrack/bugPage.html", {
+        "bug": thisBug, "jsBug":jsBug,  "solver" : solver
     })
+
+    else: #if this bug doesn't have a solver yet
+        jsBug = thisBug.serialiseBug()
+        jsBug = json.dumps(jsBug, default=str)
+     
+        return render(request, "bugtrack/bugPage.html", {
+        "bug": thisBug, "jsBug": jsBug #JsonResponse([thisBug.serialiseBug()], safe=False)# #bug is the bug object from the DB, jsBug is a json representation (no desc)
+        })
+@csrf_exempt
+def newSolver (request):
+    if  request.method != 'POST':
+        return JsonResponse({"message": "Get request."}, status=201)
+    data = json.loads(request.body)
+    userId = data.get('userId')
+    bugId= data.get('bugId')
+    
+    thisBug = Bug.objects.get(id=bugId)
+    thisUser = User.objects.get(id=userId)
+    print(thisBug)
+    print(thisUser)
+    newSolver = Solver(user=thisUser, bug=thisBug)
+    newSolver.save()
+    thisBug.status = 'claimed'
+    thisBug.bugSolver = newSolver
+    thisBug.save()
+    print(newSolver)
+    return JsonResponse([thisBug.serialiseBug()], safe=False) # I assume if i made a fetch
+    #inside of the bugPage.js then I would be able to access the updated thisBug data
+
+@csrf_exempt
+def newUpdate(request): #update has to create new update object, add update to solver, update bug status
+    if  request.method != 'POST':
+        return JsonResponse({"message": "Get request."}, status=201)
+    ##### GET DATA FROM FRONTEND #####
+    data = json.loads(request.body)
+    update = data.get('newUpdate')
+    newStatus = data.get('newStatus')
+    thisSolver = Solver.objects.get(user = request.user) #get the user who has posted the update
+    thisBug = thisSolver.bug #get the bug the update is being posted on
+    ##### UPDATE OBJECTS ######
+    if newStatus == 'solved':
+        
+
+    else:
+        thisBug.status = newStatus #updates the bug's status as per the dropdown menu
+        thisBug.save()
+        newUpdate = Update(solver = thisSolver, text = update) #create update object
+        newUpdate.save()
+        print(newUpdate)
+        thisSolver.updates.add(newUpdate) #adds update to the solver object, should add updates to the bug 
+        thisSolver.save()
+        print(thisSolver.updates.all())
+        return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
 
     
 

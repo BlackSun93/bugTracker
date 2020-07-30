@@ -1,10 +1,52 @@
 {% extends "bugtrack/layout.html" %}
+{% load static %}
 {% block body %}
+<! if this user is this bug's solver, if this bug has no solver or if another user is this solver >
+<div id='bugObjectDiv' data-bug = "{{bug}}">
+{% if bug.bugSolver == None %}
+    show some way of commiting to solve the bug (probably implement some js method to link the two)
+    <div id='solverButtonDiv'></div>
+    <script> solverButton({{request.user.id}}) </script>
+{% endif %}
+
+
 <p>Detailed view of a bug, i imagine clicking a bug on the homepage will go to this screen</P>
 <p> from here users will be able to commit to solving the bug</p>
 <p>if this user is this bug's solver, show functionality for posting updates or changing bug's status? </p>
 <p>or different html for solver? I think i'll try to implement it all on this html for now and split if needed</p>
+    <div id='bugInfoDiv'>
+        {{bug.id}}, {{bug.title}}, {{bug.description}} {{bug.bugSolver.user.username}}
+    </div>
 
-{{bug.id}}, {{bug.title}}, {{bug.description}}
+    {% if bug.bugSolver.user.id == request.user.id %} <! if logged in user is this bug's solver>
+    <div id='updateDiv'>
+       <form id="updateForm"> 
+            <div class="form-group">
+                Post an update on this bug:<textarea id='updateText' class="form-control", rows='3', cols='20'> </textarea>
+                 <div class='form-group'>
+                    <select id='updateStatus' class='form-group' size='1'>
+                        <option value = 'processing'>processing </option>
+                        <option value = 'solved'>solved </option>
+                        <option value = 'unclaimed'>unclaimed *This will reopen the bug for other uses to take!* </option>
+                    </select>
+                </div>
+            </div>
+            <input type="submit" class="btn btn-primary"/>
+        </form>
+    </div>
+    {% endif %}
+    <div id='updateDiv'> </div>
 
 {% endblock%}
+{% block script %}
+{% if solver %}
+    <script type="text/javascript">
+    const solverJson = "{{solver|safe}}";
+    </script>
+{% endif %}
+<script src="{% static 'bugtrack/bugPage.js' %}"></script> 
+<script type="text/javascript">
+    const bugJson = {{jsBug|safe}};
+</script><!gets JSON data from views, allows bug json to be used in js >
+{% endblock %}
+
