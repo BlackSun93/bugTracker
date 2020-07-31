@@ -3,12 +3,13 @@
 
 {% block body%}
 
-<h2> This will be the homepage kind of deal </h2>
-
-<p> Will show list of most recent problems and maybe most recently solved? </p>
-
-<p> also provide some functionality for posting a problem </p>
-<p> separate html for problem posting? maybe generate a django form class for it </p>
+    {% if solvedList %}
+    <div id='solvedDiv'> Bugs you reported have been solved!
+        {% for solved in solvedList %}
+        <p>  <a href ="{% url 'bugPage' solved.id %}">  {{solved.id}} {{solved.title}}  {{solved.location}} {{solved.priority}} {{solved.status}}</a> </p>
+        {% endfor %}  
+    </div>
+    {% endif %}
 
 
 <p> report a bug </p>

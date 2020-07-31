@@ -3,23 +3,27 @@
 {% block body %}
 <! if this user is this bug's solver, if this bug has no solver or if another user is this solver >
 <div id='bugObjectDiv' data-bug = "{{bug}}">
-{% if bug.bugSolver == None %}
-    show some way of commiting to solve the bug (probably implement some js method to link the two)
-    <div id='solverButtonDiv'></div>
-    <script> solverButton({{request.user.id}}) </script>
-{% endif %}
+    {% if bug.bugSolver == None %}
+        {%if bug.status != solved%} <!no point in having the solver option if bug is already solved>
+            <div id='solverButtonDiv'></div>
+            <script> solverButton({{request.user.id}}) </script>
+        {% endif %}
+    {% endif %}
 
-
-<p>Detailed view of a bug, i imagine clicking a bug on the homepage will go to this screen</P>
-<p> from here users will be able to commit to solving the bug</p>
-<p>if this user is this bug's solver, show functionality for posting updates or changing bug's status? </p>
-<p>or different html for solver? I think i'll try to implement it all on this html for now and split if needed</p>
+    {% if bug.status == 'solved' %}
+        {% if bug.poster == request.user %}
+            <h3> Should see this if bug is solved and logged in as the bug poster </h3>
+            Please read the solution and try it, if it works click the 'Bug solved!' button
+            <div id='solutionDiv'></div>
+            <script>solution({{bug.id}}, {{request.user.id}} ) </script> <!try , if doesnt work>
+        {% endif %}
+    {% endif %}
     <div id='bugInfoDiv'>
        <h3> {{bug.id}} </h3>, <p> {{bug.title}}, {{bug.description}} {{bug.bugSolver.user.username}} </p> Current status: {{bug.status}}
     </div>
 
     {% if bug.bugSolver.user.id == request.user.id  %} <! if logged in user is this bug's solver and bug not solved>
-   {% if bug.status != 'solved' %}
+        {% if bug.status != 'solved' %}
     <div id='updateDiv'>
        <form id="updateForm"> 
             <div class="form-group">
@@ -35,8 +39,8 @@
             <input type="submit" class="btn btn-primary"/>
         </form>
     </div>
+        {% endif %}
     {% endif %}
-     {% endif %}
  <div id='updateDiv'> </div> <! append updates to this div in js, outside of if because need to be able to post even if there were 0 updates>
     {%if updates %}
         {% for update in updates %}

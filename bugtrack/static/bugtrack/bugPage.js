@@ -39,13 +39,31 @@ function solverButton(userId){ //should standardise whether or not to make eleme
 function createUpdate() {
     newUpdate = document.getElementById('updateText').value;
     newStatus = document.getElementById('updateStatus').value;
+    bugId = bugJson.id;
     alert(newUpdate);
     fetch('newUpdate/', {
         method: 'POST',
         body: JSON.stringify({
             newUpdate: newUpdate,
-            newStatus:  newStatus
+            newStatus:  newStatus,
+            bugId: bugId
         })
     })
     alert('Update posted!');
+}
+
+function solution(bugId, userId) {
+    solutionDiv = document.getElementById('solutionDiv');
+    solutionBtn = document.createElement('button');
+    solutionBtn.setAttribute('class', 'btn btn-success');
+    solutionBtn.innerHTML = 'This solution worked!';
+    solutionBtn.addEventListener('click', function() {
+        fetch(`bugSolved/${bugId}`, {
+            method: 'POST',
+            body: JSON.stringify({ //no need to send any data regarding 'is finished' or anything, can just set 'fixed' to 'true' in views
+                userId: userId,
+            })
+        })
+    })
+    solutionDiv.append(solutionBtn);
 }
