@@ -104,6 +104,9 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
     
 
 class Update(models.Model): #the Solver will be able to post updates about the bug (if user is solver of this bug then x, y)
+    #this didnt work out because when a bug is 'solved' but the user isnt happy with the solution, they should be able to post
+    #a reason why they aren't happy with the solution, this would be done through this update class (so it could be displayed with the other updates)
+    #but the poster of the bug is not a solver object. I will probably have to make update take a user and a bug foreignkey.
     solver      = models.ForeignKey("Solver", on_delete=models.CASCADE, related_name='updateSolver')
     text        = models.CharField(max_length=200)
     timestamp   = models.DateTimeField(auto_now_add=True)

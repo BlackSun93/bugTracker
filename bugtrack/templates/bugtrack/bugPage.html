@@ -2,11 +2,19 @@
 {% load static %}
 {% block body %}
 <! if this user is this bug's solver, if this bug has no solver or if another user is this solver >
+{% if bug.status != 'finished'%}
+ {% endif %}   
+ {% if bug.status == 'finished'%}
+ You are seeing this because the bug has been finsihed, I wanted to see if this wil change responsivley (as bugSolved returns a jsonresponse)
+ {% endif %}
+
 <div id='bugObjectDiv' data-bug = "{{bug}}">
+    <div id='ifNotFixedDiv'>
     {% if bug.bugSolver == None %}
-        {%if bug.status != solved%} <!no point in having the solver option if bug is already solved>
+        {%if bug.status != solved%} <!no point in having the solver option if bug is already solved, although, bug will have a solver until solver gives up>
             <div id='solverButtonDiv'></div>
             <script> solverButton({{request.user.id}}) </script>
+           
         {% endif %}
     {% endif %}
 
@@ -15,9 +23,26 @@
             <h3> Should see this if bug is solved and logged in as the bug poster </h3>
             Please read the solution and try it, if it works click the 'Bug solved!' button
             <div id='solutionDiv'></div>
-            <script>solution({{bug.id}}, {{request.user.id}} ) </script> <!try , if doesnt work>
+            <script>solution({{bug.id}}, {{request.user.id}} ) </script> 
+             <script> notSolution()</script>
+  <div id='notSolvedDiv'>
+       <form id="notSolvedForm"> 
+            <div class="form-group">
+                Post an update on this bug:<textarea id='notSolvedText' class="form-control", rows='3', cols='20'> </textarea>
+                 <div class='form-group'>
+                    <select id='updateStatus' class='form-group' size='1'>
+                        <option value = 'processing'>processing </option> <! set bug back to processing, need to notify bugsolver>
+                        <option value = 'unclaimed'>unclaimed *This will reopen the bug for other uses to take!* </option>
+                    </select>
+                </div>
+            </div>
+            <input type="submit" class="btn btn-primary"/>
+        </form>
+    </div>
+
         {% endif %}
     {% endif %}
+   </div> <! end of if not fixed div>
     <div id='bugInfoDiv'>
        <h3> {{bug.id}} </h3>, <p> {{bug.title}}, {{bug.description}} {{bug.bugSolver.user.username}} </p> Current status: {{bug.status}}
     </div>

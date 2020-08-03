@@ -12,5 +12,8 @@ urlpatterns = [
     path("bugPage/<bugId>", views.bugPage, name="bugPage"),
     path('bugPage/newSolver/', views.newSolver, name='newSolver'),
     path('bugPage/newUpdate/', views.newUpdate, name='newUpdate'),
-    path('bugPage/bugSolved/<bugId>', views.bugSolved, name='bugSolved')
+    path('bugPage/bugSolved/<bugId>', views.bugSolved, name='bugSolved'),
+    path('bugPage/bugNotSolved/<bugId>', views.bugNotSolved, name='bugNotSolved')
+
+
 ]
