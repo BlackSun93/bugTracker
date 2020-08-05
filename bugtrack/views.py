@@ -15,11 +15,18 @@ from .models import *
 def index(request): 
     #default view should display all the bugs, so I will get them here and pass them into index.html
     #need to exclude bugs that have been taken on by someone (to prevent multiple users takng them on)
-    bugList = Bug.objects.all().order_by('-id') #order bugs by reverse id (newest bugs first) needs to exclude solved bugs
-    solvedBugsForUserReview = Bug.objects.filter(status = 'solved', )
-    return render(request, "bugtrack/index.html", {
+    bugList = Bug.objects.all().order_by('id').exclude(status = 'solved').exclude(status='finished') #order bugs by reverse id (oldest bugs first) needs to exclude solved bugs
+    try:
+        solvedBugsForUserReview = Bug.objects.filter(status = 'solved', poster = request.user, fixed = False ).order_by('-modified') 
+        #if there are solved bugs that the user posted, render them at the top of the page in most recently solved first order
+        return render(request, "bugtrack/index.html", {
+        "bugList": bugList, "solvedList": solvedBugsForUserReview
+        })
+    except:
+         return render(request, "bugtrack/index.html", {
         "bugList": bugList
-    })
+         })
+
 
 
 def login_view(request):
@@ -136,7 +143,8 @@ def newSolver (request):
     thisBug.bugSolver = newSolver
     thisBug.save()
     print(newSolver)
-    return JsonResponse([thisBug.serialiseBug()], safe=False) # I assume if i made a fetch
+    jsonBug = json.dumps(thisBug, default=str)
+    return JsonResponse(jsonBug, safe=False) # I assume if i made a fetch
     #inside of the bugPage.js then I would be able to access the updated thisBug data
 
 @csrf_exempt
@@ -147,8 +155,11 @@ def newUpdate(request): #update has to create new update object, add update to s
     data = json.loads(request.body)
     update = data.get('newUpdate')
     newStatus = data.get('newStatus')
-    thisSolver = Solver.objects.get(user = request.user) #get the user who has posted the update
-    thisBug = thisSolver.bug #get the bug the update is being posted on
+    bugId = data.get('bugId')
+    thisBug = Bug.objects.get(id=bugId) #get the bug the update is being posted on
+    print(thisBug)
+    thisSolver = Solver.objects.get(user = request.user, bug = thisBug) #get the user who has posted the update
+    
     ##### UPDATE OBJECTS ######
     #addUpdate(newUpdate, thisBug, thisSolver)
     newUpdate = Update(solver = thisSolver, text = update) #create update object
@@ -160,7 +171,7 @@ def newUpdate(request): #update has to create new update object, add update to s
         
         thisSolver.result = 'solved'
         thisUser = thisSolver.user
-        thisUser.solved += 1 #increment user's solved bug count
+        #thisUser.bugsSolved += 1 #increment user's solved bug count
         thisUser.save()
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
 
@@ -168,6 +179,47 @@ def newUpdate(request): #update has to create new update object, add update to s
         print(newUpdate)
         print(thisBug.updates.all())
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
+@csrf_exempt
+def bugSolved(request, bugId):
+    data = json.loads(request.body)
+    userData = data.get('userId')
+    thisBug = Bug.objects.get(id=bugId) #the solved bug
+    thisUser = User.objects.get(id=userData) #the user who accepted the fix to the bug
+    if thisUser != request.user:
+        return JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
+    thisBug.fixed = True
+    thisBug.status = 'finished'
+    print(thisBug.fixed)
+    thisBug.save()
+    thisBug.bugSolver.user.bugsSolved +=1 #increment the bug solver's bugs solved by one
+    jsonBug = json.dumps(thisBug, default=str)
+    return JsonResponse(jsonBug, safe=False)
+
+@csrf_exempt
+def bugNotSolved(request, bugId):
+    #kind of need the user to be able to give feedback on WHY they're saying the solution wasnt good enough
+    #i want the user to be able to decide to make it unclaimed or to keep the current solver
+    #user should be able to go to their bug at anytime and change it to 'unclaimed' tbh
+    print(bugId)
+    print("in not solved")
+    print(request)
+    print(request.body)
+    data = json.loads(request.body) 
+    updateStatus = data.get('updateStatus')
+    #newStatus = data.get('status')
+    reasonText = data.get('reasonText')
+    print(updateStatus)
+    print(reasonText)
+    thisBug = Bug.objects.get(id=bugId) #the solved bug
+    thisUser = request.user #the user who accepted the fix to the bug
+    if thisUser != request.user:
+        return JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
+    #create an update with the user and the reasontext
+    return  JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
+
+
+
+
 
 #### function to take an update, a bug, save the update and it it to the bug ##### MAKE SURE THI WORKS
 #def addUpdate(newUpdate, thisBug, thisSolver):

@@ -4,8 +4,8 @@ from django.utils import timezone
 import datetime
 
 class User(AbstractUser):
-    bugsPosted = models.IntegerField(default=0)
-    bugsSolved = models.IntegerField(default=0)
+    bugsPosted  = models.IntegerField(default=0)
+    bugsSolved  = models.IntegerField(default=0)
     def __str__(self):
         return f"{self.id} {self.username}"
     def SerialiseUser(self):
@@ -14,19 +14,19 @@ class User(AbstractUser):
         }   
 
 class Bug (models.Model):
-    poster =  models.ForeignKey("User", on_delete=models.PROTECT,  related_name='bugPoster') #I dont want the poster to be able to be deleted if bug open
-    status = models.CharField(max_length=50) #will be in 1 of 5 states, unclaimed, claimed, processing, testing, solved
-    priority = models.CharField(max_length=10) #so the user can give the bug a presumed priority (low, med, high)
-    title = models.CharField(max_length=50) #brief description of the bug 
+    poster      =  models.ForeignKey("User", on_delete=models.PROTECT,  related_name='bugPoster') #I dont want the poster to be able to be deleted if bug open
+    status      = models.CharField(max_length=50) #will be in 1 of 5 states, unclaimed, claimed, processing, testing, solved
+    priority    = models.CharField(max_length=10) #so the user can give the bug a presumed priority (low, med, high)
+    title       = models.CharField(max_length=50) #brief description of the bug 
     description = models.CharField(max_length=500) # full description of the issue
-    location = models.CharField( max_length=50) #where the issue is located (file, program)
+    location    = models.CharField( max_length=50) #where the issue is located (file, program)
     updates     = models.ManyToManyField("Update", related_name='bugUpdate') #should allow many updates to made by one solver
-    fix = models.CharField(max_length=500, blank=True, null=True)
+    fixed       = models.BooleanField(default=False)
     created     = models.DateTimeField(editable=False)
     modified    = models.DateTimeField( blank=True, null=True)
-    image = models.ImageField() # bootstrap has class img-fluid
-    score = models.IntegerField(default=0)
-    bugSolver = models.ForeignKey("Solver", on_delete=models.SET_NULL, related_name='bugSolverBug', blank=True, null=True)
+    image       = models.ImageField() # bootstrap has class img-fluid
+    score       = models.IntegerField(default=0)
+    bugSolver   = models.ForeignKey("Solver", on_delete=models.SET_NULL, related_name='bugSolverBug', blank=True, null=True)
     #if solver is deleted, set it to null
     #no slugfield, being able to make a url based on an issue's id will probably impart as much information to a user as an out of context title
     def __str__(self):
@@ -46,7 +46,7 @@ class Bug (models.Model):
             "modified": self.modified,
             "status": self.status,
             "priority": self.priority,
-            "solver": self.bugSolver
+            "solver": self.bugSolver #self.bugSolver.user.username too many issues with this currently, even with self.bugSolver although self.bugSolver.serialiseSolver()
         }
 
    
@@ -54,7 +54,7 @@ class Comment (models.Model): #1-1 relationship for a user making a comment on a
     user        = models.ForeignKey("User", on_delete=models.SET_NULL,  related_name='userComment', null=True)
     bug         = models.ForeignKey("Bug", on_delete=models.CASCADE, related_name='bugComment')#if bug is deleted, delete its comments
     comment     = models.CharField(max_length=200)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp   = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"Comment {self.id} From {self.user.username}, on bug {self.bug.id}"
     def serialiseComment(self):
@@ -85,7 +85,6 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
     modified    = models.DateTimeField()
     action      = models.CharField(max_length=500, blank=True, null=True) #field to allow a bug fix to be supplied, allowing it as null here but expect a
                                                                 #check in html to not actually pass a blank value (this is the fix so why is it null?)
-    
     result      = models.CharField(max_length=500, blank=True, null=True) #result can be blank in case of awaiting result/ etc
 
     def __str__(self):
@@ -105,9 +104,12 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
     
 
 class Update(models.Model): #the Solver will be able to post updates about the bug (if user is solver of this bug then x, y)
+    #this didnt work out because when a bug is 'solved' but the user isnt happy with the solution, they should be able to post
+    #a reason why they aren't happy with the solution, this would be done through this update class (so it could be displayed with the other updates)
+    #but the poster of the bug is not a solver object. I will probably have to make update take a user and a bug foreignkey.
     solver      = models.ForeignKey("Solver", on_delete=models.CASCADE, related_name='updateSolver')
     text        = models.CharField(max_length=200)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp   = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"update #{self.id} from {self.solver.user.username} on bug {self.solver.bug.id}"
     def serialiseUpdate(self):
