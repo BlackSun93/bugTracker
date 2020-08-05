@@ -1,10 +1,39 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('loaded'); 
-    document.getElementById('notSolvedDiv').style.display = 'none';
+    //may shift logic about which html divs to show to js side
+    //divs to show/hide:
+    //finishedDiv, solverButtonDiv, solutionDiv (with notSolvedForm), updateForm
+    
     bugElement = document.getElementById('bugObjectDiv');
     bugInfo = bugElement.dataset.bug;
-    //bugJson = JSON.parse(bugJson);
-    console.log(bugJson);
+    currentUser = bugElement.dataset.user;
+    solver = bugElement.dataset.solver;
+    console.log(bugJson.status);
+    console.log(bugInfo);
+    console.log(currentUser + "  " + solver);
+    console.log(bugJson.poster);
+    if (currentUser == solver) {
+        document.getElementById('updateForm').style.display = 'block';
+    }
+    else {
+        document.getElementById('updateForm').style.display = 'none';
+    }
+    if (bugJson.status == 'unclaimed') {
+        document.getElementById('solverButtonDiv').style.display = 'block';
+    }
+    else {
+        document.getElementById('solverButtonDiv').style.display = 'none';
+    }
+    if ((bugJson.status == 'solved') && (bugJson.poster == currentUser) ) {
+       document.getElementById('solutionDiv').style.display == 'block';
+    } 
+    
+    try {
+        document.getElementById('notSolvedDiv').style.display = 'none';
+    }
+    catch {
+        console.log('unsolved div is not here'); //stops the error if the update form isn't going to be generated
+    }
+    
     try {
         document.getElementById('updateForm').onsubmit = createUpdate;
     }
@@ -18,7 +47,13 @@ document.addEventListener('DOMContentLoaded', function() {
        document.getElementById('updateDiv').style.display = 'none'; 
         //ideally set background to green or some other obvious indicator
     }
-    document.getElementById('notSolvedForm').onsubmit = notSolutionForm;
+    try {
+        document.getElementById('notSolvedForm').onsubmit = notSolutionForm;
+    }
+    catch {
+        console.log("notSolvedForm isn't displayed");
+    }
+    
 
     
 });
@@ -42,7 +77,8 @@ function solverButton(userId){ //should standardise whether or not to make eleme
         })
         alert('a');
         document.getElementById('solverButtonDiv').style.display= 'none';
-        document.getElementById('updateDiv').style.display = 'none'; 
+        document.getElementById('updateDiv').style.display = 'block'; 
+        document.getElementById('updateForm').style.display = 'block';
     })
     buttonDiv.append(button);
 }
@@ -50,6 +86,7 @@ function solverButton(userId){ //should standardise whether or not to make eleme
 
 
 function createUpdate() {
+    alert("A");
     newUpdate = document.getElementById('updateText').value;
     newStatus = document.getElementById('updateStatus').value;
     bugId = bugJson.id;

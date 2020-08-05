@@ -46,7 +46,8 @@ class Bug (models.Model):
             "modified": self.modified,
             "status": self.status,
             "priority": self.priority,
-            "solver": self.bugSolver #self.bugSolver.user.username too many issues with this currently, even with self.bugSolver although self.bugSolver.serialiseSolver()
+            "solver": self.bugSolver,
+            "poster": self.poster.id
         }
 
    
@@ -106,19 +107,36 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
 class Update(models.Model): #the Solver will be able to post updates about the bug (if user is solver of this bug then x, y)
     #this didnt work out because when a bug is 'solved' but the user isnt happy with the solution, they should be able to post
     #a reason why they aren't happy with the solution, this would be done through this update class (so it could be displayed with the other updates)
-    #but the poster of the bug is not a solver object. I will probably have to make update take a user and a bug foreignkey.
-    solver      = models.ForeignKey("Solver", on_delete=models.CASCADE, related_name='updateSolver')
+    #but the poster of the bug is not a solver object. I will probably have to make update take a user and a bug
+    #made a new class for comments on updates, maybe I need to reference it in the update class but I'm not sure
+    #I'll need a reference to it when I pass update objects to the render ({{update.updateComments}})
+    solver      = models.ForeignKey("Solver", on_delete=models.SET_NULL, related_name='updateSolver', blank=True, null=True)
     text        = models.CharField(max_length=200)
     timestamp   = models.DateTimeField(auto_now_add=True)
+    comment     = models.ForeignKey("UpdateComment", on_delete=models.CASCADE, related_name='updateComment', blank=True, null=True)
     def __str__(self):
         return f"update #{self.id} from {self.solver.user.username} on bug {self.solver.bug.id}"
     def serialiseUpdate(self):
         return {
             "id": self.id,
             "solver": self.solver.user.username,
-            "text": self.text
+            "text": self.text,
+            "comment": self.comment
         }
     
+class UpdateComment (models.Model):
+    update      = models.ForeignKey("Update", on_delete=models.CASCADE)
+    user        = models.ForeignKey("User", on_delete=models.CASCADE)
+    text        = models.CharField(max_length=200)
+    def __str__(self):
+        return f"Comment on update {self.update.id} From {self.user.username}"
+    def serialiseUpdateComment(self):
+        return{
+            "id": self.id,
+            "user": self.user.username,
+            "update": self.update.id,
+            "comment": self.text
+        }
 
 class Votes (models.Model): #any user can vote on a bug (either for solution or for urgency? or interest)
     user        = models.ForeignKey("User", on_delete=models.CASCADE, blank=True, null=True)

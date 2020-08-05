@@ -103,8 +103,8 @@ def createBug(request):
 def bugPage (request, bugId):
     thisBug = Bug.objects.get(id=bugId)
     updates = thisBug.updates.all().order_by('-id')
-    print(thisBug.updates)
-    print(updates)
+    #print(thisBug.updates)
+    #print(updates)
     
     if thisBug.solverBug.exists(): #if this bug has a solver, pass solver info into the template
         solver = thisBug.solverBug.get() #get solver object
@@ -175,6 +175,11 @@ def newUpdate(request): #update has to create new update object, add update to s
         thisUser.save()
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
 
+    elif newStatus == 'unclaimed':
+        thisSolver.delete() # have to clear the solver object
+        print("solver deleted")
+        return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
+
     else:
         print(newUpdate)
         print(thisBug.updates.all())
@@ -200,22 +205,26 @@ def bugNotSolved(request, bugId):
     #kind of need the user to be able to give feedback on WHY they're saying the solution wasnt good enough
     #i want the user to be able to decide to make it unclaimed or to keep the current solver
     #user should be able to go to their bug at anytime and change it to 'unclaimed' tbh
-    print(bugId)
-    print("in not solved")
-    print(request)
-    print(request.body)
-    data = json.loads(request.body) 
-    updateStatus = data.get('updateStatus')
-    #newStatus = data.get('status')
-    reasonText = data.get('reasonText')
-    print(updateStatus)
-    print(reasonText)
-    thisBug = Bug.objects.get(id=bugId) #the solved bug
     thisUser = request.user #the user who accepted the fix to the bug
     if thisUser != request.user:
         return JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
+    print(json.loads(request.body))
+    data = json.loads(request.body)
+    updateStatus = data.get('updateStatus')
+    reasonText = data.get('reasonText')
+    thisBug = Bug.objects.get(id=bugId) #the solved bug
+    thisBug.status = updateStatus
+    thisBug.save()
+    #need to find most recent update (as last update will be when the bug was solved)
+    lastUpdate = thisBug.updates.last()
+    newUpdateComment = UpdateComment(user = thisUser, update = lastUpdate, text = reasonText)
+    
+    newUpdateComment.save()
+    lastUpdate.comment=newUpdateComment
+    lastUpdate.save()
+    thisBug = json.dumps(thisBug, default=str)
     #create an update with the user and the reasontext
-    return  JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
+    return  JsonResponse(thisBug, safe=False) #solver not serialiseable
 
 
 

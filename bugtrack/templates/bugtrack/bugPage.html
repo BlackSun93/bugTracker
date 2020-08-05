@@ -8,7 +8,7 @@
  You are seeing this because the bug has been finsihed, I wanted to see if this wil change responsivley (as bugSolved returns a jsonresponse)
  {% endif %}
 
-<div id='bugObjectDiv' data-bug = "{{bug}}">
+<div id='bugObjectDiv' data-bug = "{{bug}}", data-user="{{request.user.id}}", data-solver="{{bug.bugSolver.user.id}}">
     <div id='ifNotFixedDiv'>
     {% if bug.bugSolver == None %}
         {%if bug.status != solved%} <!no point in having the solver option if bug is already solved, although, bug will have a solver until solver gives up>
