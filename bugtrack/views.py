@@ -167,6 +167,7 @@ def newUpdate(request): #update has to create new update object, add update to s
     thisBug.status = newStatus #updates the bug's status as per the dropdown menu
     thisBug.updates.add(newUpdate) #adds update to the solver object, should add updates to the bug 
     thisBug.save()
+    print(newStatus)
     if newStatus == 'solved':
         
         thisSolver.result = 'solved'
@@ -225,6 +226,13 @@ def bugNotSolved(request, bugId):
     thisBug = json.dumps(thisBug, default=str)
     #create an update with the user and the reasontext
     return  JsonResponse(thisBug, safe=False) #solver not serialiseable
+
+def finishedBugList (request):
+    finishedBugs = Bug.objects.filter(fixed = True).order_by('-id') #all the bugs where user has said the solution worked
+    return render(request, "bugtrack/index.html", {
+        "bugList": finishedBugs, "header":'finishedBugs' #render a version of the index page, header is passed so main.js knows we only want fixed bugs
+        })
+
 
 
 

@@ -2,7 +2,9 @@
 {% load static %}
 
 {% block body%}
-
+{% if header%}
+    <div id='header' data-header='{{header}}'></div>
+{% endif %}
     {% if solvedList %}
     <div id='solvedDiv'> Bugs you reported have been solved!
         {% for solved in solvedList %}

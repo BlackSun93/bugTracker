@@ -89,7 +89,7 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
     result      = models.CharField(max_length=500, blank=True, null=True) #result can be blank in case of awaiting result/ etc
 
     def __str__(self):
-        return f"Solver {self.user.username} on {self.bug.id} current status: {self.bug.status}"
+        return f"{self.user.username}" #edited because the username of solver is enough info
     def serialiseSolver(self):
         return {
             "id": self.id,

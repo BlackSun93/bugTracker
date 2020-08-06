@@ -1,36 +1,27 @@
 {% extends "bugtrack/layout.html" %}
 {% load static %}
 {% block body %}
-<! if this user is this bug's solver, if this bug has no solver or if another user is this solver >
-{% if bug.status != 'finished'%}
- {% endif %}   
- {% if bug.status == 'finished'%}
- You are seeing this because the bug has been finsihed, I wanted to see if this wil change responsivley (as bugSolved returns a jsonresponse)
- {% endif %}
+
 
 <div id='bugObjectDiv' data-bug = "{{bug}}", data-user="{{request.user.id}}", data-solver="{{bug.bugSolver.user.id}}">
-    <div id='ifNotFixedDiv'>
-    {% if bug.bugSolver == None %}
-        {%if bug.status != solved%} <!no point in having the solver option if bug is already solved, although, bug will have a solver until solver gives up>
-            <div id='solverButtonDiv'></div>
-            <script> solverButton({{request.user.id}}) </script>
-           
-        {% endif %}
-    {% endif %}
+ <div id='solverButtonDiv'></div>
 
-    {% if bug.status == 'solved' %}
-        {% if bug.poster == request.user %}
+    <div id='ifNotFixedDiv'>
+
+           
+           <! <script> <!solverButton({{request.user.id}}) </script>>
+
             <h3> Should see this if bug is solved and logged in as the bug poster </h3>
             Please read the solution and try it, if it works click the 'Bug solved!' button
             <div id='solutionDiv'></div>
             <script>solution({{bug.id}}, {{request.user.id}} ) </script> 
              <script> notSolution()</script>
-  <div id='notSolvedDiv'>
-       <form id="notSolvedForm"> 
+        <div id='notSolvedDiv'>
+         <form id="notSolvedForm"> 
             <div class="form-group">
                 Post an update on this bug:<textarea id='notSolvedText' class="form-control", rows='3', cols='20'> </textarea>
                  <div class='form-group'>
-                    <select id='updateStatus' class='form-group' size='1'>
+                    <select id='updateStatusNotSolved' class='form-group' size='1'>
                         <option value = 'processing'>processing </option> <! set bug back to processing, need to notify bugsolver>
                         <option value = 'unclaimed'>unclaimed *This will reopen the bug for other uses to take!* </option>
                     </select>
@@ -40,15 +31,14 @@
         </form>
     </div>
 
-        {% endif %}
-    {% endif %}
+       
    </div> <! end of if not fixed div>
     <div id='bugInfoDiv'>
-       <h3> {{bug.id}} </h3>, <p> {{bug.title}}, {{bug.description}} {{bug.bugSolver.user.username}} </p> Current status: {{bug.status}}
+       <h3> {{bug.id}}  {{bug.title}} </h3>, <p> {{bug.description}} {{bug.bugSolver.user.username}} </p> 
+       <div id='statusDiv'> Current status: <div id='statusDivText'>{{bug.status}} </div></div>
     </div>
 
-    {% if bug.bugSolver.user.id == request.user.id  %} <! if logged in user is this bug's solver and bug not solved>
-        {% if bug.status != 'solved' %}
+   
     <div id='updateDiv'>
        <form id="updateForm"> 
             <div class="form-group">
@@ -64,8 +54,7 @@
             <input type="submit" class="btn btn-primary"/>
         </form>
     </div>
-        {% endif %}
-    {% endif %}
+       
  <div id='updateDiv'> </div> <! append updates to this div in js, outside of if because need to be able to post even if there were 0 updates>
     {%if updates %}
         {% for update in updates %}
@@ -77,7 +66,7 @@
 {% block script %}
 {% if solver %}
     <script type="text/javascript">
-    const solverJson = "{{solver|safe}}";
+    const solverJson = {{solver|safe}};
     </script>
 {% endif %}
 <script src="{% static 'bugtrack/bugPage.js' %}"></script> 

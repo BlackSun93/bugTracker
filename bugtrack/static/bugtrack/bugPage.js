@@ -7,10 +7,18 @@ document.addEventListener('DOMContentLoaded', function() {
     bugInfo = bugElement.dataset.bug;
     currentUser = bugElement.dataset.user;
     solver = bugElement.dataset.solver;
-    console.log(bugJson.status);
+    console.log(bugJson);
     console.log(bugInfo);
     console.log(currentUser + "  " + solver);
     console.log(bugJson.poster);
+    document.getElementById('updateForm').style.display = 'none';
+    //document.getElementById('updateForm').style.display = 'block';
+    visibilityChecks();
+        alert('b');
+        
+    
+    
+    /*
     if (currentUser == solver) {
         document.getElementById('updateForm').style.display = 'block';
     }
@@ -25,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if ((bugJson.status == 'solved') && (bugJson.poster == currentUser) ) {
        document.getElementById('solutionDiv').style.display == 'block';
-    } 
+    } */
     
     try {
         document.getElementById('notSolvedDiv').style.display = 'none';
@@ -57,7 +65,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
 });
-
+function visibilityChecks() {
+    document.getElementById('updateForm').style.display = 'none';
+    if(currentUser == solver) {
+        alert('current user is this bugs solver');
+        document.getElementById('updateForm').style.display = 'block';
+    }
+    if (bugJson.status == 'unclaimed') {
+        alert('bug is unclaimed');
+        solverButton(currentUser);
+    }
+    else {
+        alert('bug is claimed, dont show solve this bug btn');
+        document.getElementById('solveThisBugBtn') == 'none';
+    }
+    if ((bugJson.status == 'solved') && (bugJson.poster == currentUser) ) {
+        alert('bug is solved and current user posted the bug');
+        document.getElementById('ifNotFixedDiv').style.display = 'block';
+        document.getElementById('updateForm').style.display = 'none';
+    }
+    else {
+        document.getElementById('ifNotFixedDiv').style.display = 'none';
+    }
+   
+}
 function hello() {
     alert('hello');
 }
@@ -65,6 +96,7 @@ function hello() {
 function solverButton(userId){ //should standardise whether or not to make elements in JS or in html really
     buttonDiv = document.getElementById('solverButtonDiv');
     button = document.createElement('button');
+    button.setAttribute('id', 'solveThisBugBtn');
     button.setAttribute('class', 'btn btn-success');
     button.innerHTML = 'Solve this bug!';
     button.addEventListener('click', function() {
@@ -76,6 +108,7 @@ function solverButton(userId){ //should standardise whether or not to make eleme
             })
         })
         alert('a');
+        document.getElementById('statusDivText').innerHTML = 'claimed';
         document.getElementById('solverButtonDiv').style.display= 'none';
         document.getElementById('updateDiv').style.display = 'block'; 
         document.getElementById('updateForm').style.display = 'block';
@@ -91,6 +124,7 @@ function createUpdate() {
     newStatus = document.getElementById('updateStatus').value;
     bugId = bugJson.id;
     alert(newUpdate);
+    alert(newStatus);
     fetch('newUpdate/', {
         method: 'POST',
         body: JSON.stringify({
@@ -114,6 +148,11 @@ function solution(bugId, userId) {
                 userId: userId,
             })
         })
+        
+        document.getElementById('ifNotFixedDiv').style.display = 'none';
+        document.getElementById('updateForm').style.display = 'none';
+        document.getElementById('statusDivText').innerHTML = `fixed by ${bugJson.solver}`;
+        
     })
     solutionDiv.append(solutionBtn);
 }
