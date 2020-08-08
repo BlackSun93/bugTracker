@@ -58,7 +58,13 @@
  <div id='updateDiv'> </div> <! append updates to this div in js, outside of if because need to be able to post even if there were 0 updates>
     {%if updates %}
         {% for update in updates %}
-        <div id='updateDiv{{update.id}}'> {{update.timestamp}} , {{update.text}}
+        <div id='updateDiv{{update.id}}'>
+          
+            {{update.timestamp}} , {{update.text}}
+              {% if update.comment %}
+          <div id='commentDiv{{comment.id}}'> <p> The bugPoster commented on the solution: {{update.comment.text}} </p> </div>
+            {% endif %}
+        </div>
         {% endfor %}
     {% endif %}
 

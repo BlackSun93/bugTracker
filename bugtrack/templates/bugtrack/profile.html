@@ -4,6 +4,23 @@
 
 <h2> user profile page </h2>
 
-<p>Some infor on user, prtoblems posted, solved, current bugs solving / found </p>
-
+<p>Some info on user, problems posted, solved, current bugs solving / found </p>
+<p> {{solvednum}} bugs solved, {{postednum}} bugs posted </p>
+Bugs this user posted with no solver:
+{% for bug in current %}
+ <p>  <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} {{bug.title}}  {{bug.location}} {{bug.priority}} {{bug.status}}</a> </p>
+{% endfor %}
+bugs this user solved:
+{% for bug in solved %}
+ <p>  <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} {{bug.title}}  {{bug.location}} {{bug.priority}} {{bug.status}}</a> 
+ solved by <a href="{% url 'profile' bug.bugSolver.user.username%}"> {{bug.bugSolver.user.username}} </a> </p>
+{% endfor %}
+bugs this user posted:
+{% for bug in posted %}
+ <p>  <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} {{bug.title}}  {{bug.location}} {{bug.priority}} {{bug.status}}</a> </p>
+{% endfor %}
+bugs this user is solving
+{% for bug in solving %}
+ <p>  <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} {{bug.title}}  {{bug.location}} {{bug.priority}} {{bug.status}}</a> </p>
+{% endfor %}
 {% endblock %}

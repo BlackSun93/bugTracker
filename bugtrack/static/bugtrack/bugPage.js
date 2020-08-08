@@ -14,10 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateForm').style.display = 'none';
     //document.getElementById('updateForm').style.display = 'block';
     visibilityChecks();
-        alert('b');
         
-    
-    
     /*
     if (currentUser == solver) {
         document.getElementById('updateForm').style.display = 'block';
@@ -68,19 +65,19 @@ document.addEventListener('DOMContentLoaded', function() {
 function visibilityChecks() {
     document.getElementById('updateForm').style.display = 'none';
     if(currentUser == solver) {
-        alert('current user is this bugs solver');
+       
         document.getElementById('updateForm').style.display = 'block';
     }
     if (bugJson.status == 'unclaimed') {
-        alert('bug is unclaimed');
+        
         solverButton(currentUser);
     }
     else {
-        alert('bug is claimed, dont show solve this bug btn');
+       
         document.getElementById('solveThisBugBtn') == 'none';
     }
     if ((bugJson.status == 'solved') && (bugJson.poster == currentUser) ) {
-        alert('bug is solved and current user posted the bug');
+        
         document.getElementById('ifNotFixedDiv').style.display = 'block';
         document.getElementById('updateForm').style.display = 'none';
     }
