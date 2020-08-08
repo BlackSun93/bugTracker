@@ -5,7 +5,7 @@ import datetime
 
 class User(AbstractUser):
     bugsPosted  = models.IntegerField(default=0)
-    bugsSolved  = models.IntegerField(default=0)
+    bugsSolved  = models.ManyToManyField("Solver", related_name='userSolved') #going to add to this whenever a bug is marked as fixed
     def __str__(self):
         return f"{self.id} {self.username}"
     def SerialiseUser(self):
@@ -30,7 +30,7 @@ class Bug (models.Model):
     #if solver is deleted, set it to null
     #no slugfield, being able to make a url based on an issue's id will probably impart as much information to a user as an out of context title
     def __str__(self):
-        return f"Bug {self.id}" #short representation because any of these fields could be potentially very long
+        return f"Bug {self.id} from {self.poster}" #short representation because any of these fields could be potentially very long
 
     def save(self, *args, **kwargs):
         ''' On save, update timestamps '''
@@ -89,7 +89,7 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
     result      = models.CharField(max_length=500, blank=True, null=True) #result can be blank in case of awaiting result/ etc
 
     def __str__(self):
-        return f"Solver {self.user.username} on {self.bug.id} current status: {self.bug.status}"
+        return f"{self.user.username}" #edited because the username of solver is enough info
     def serialiseSolver(self):
         return {
             "id": self.id,
@@ -115,7 +115,10 @@ class Update(models.Model): #the Solver will be able to post updates about the b
     timestamp   = models.DateTimeField(auto_now_add=True)
     comment     = models.ForeignKey("UpdateComment", on_delete=models.CASCADE, related_name='updateComment', blank=True, null=True)
     def __str__(self):
-        return f"update #{self.id} from {self.solver.user.username} on bug {self.solver.bug.id}"
+        try:
+            return f"update #{self.id} from {self.solver.user.username} on bug {self.solver.bug.id}"
+        except:
+            return f"update {self.id}"
     def serialiseUpdate(self):
         return {
             "id": self.id,
@@ -129,7 +132,7 @@ class UpdateComment (models.Model):
     user        = models.ForeignKey("User", on_delete=models.CASCADE)
     text        = models.CharField(max_length=200)
     def __str__(self):
-        return f"Comment on update {self.update.id} From {self.user.username}"
+        return f"Comment on update {self.update.id}, bug {self.update.solver.bug} From {self.user.username}"
     def serialiseUpdateComment(self):
         return{
             "id": self.id,

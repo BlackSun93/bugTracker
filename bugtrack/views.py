@@ -81,7 +81,20 @@ def register(request):
         return render(request, "bugtrack/register.html")
 
 def profile(request, username):
-    return render(request, "bugtrack/profile.html")
+    #profile page should show posted bugs from user (maybe just last 10 bugs?) last 5 bugs solved by user, total posted, total solved
+    thisUser = User.objects.get(username = username) #gets the user object of this user for the profile
+    thisUserPostedBugs = Bug.objects.filter(poster = thisUser) # all bugs where this user is the poster
+    thisUserSolvedBugs = Bug.objects.filter(bugSolver__user = thisUser, fixed = True) # all instances where this user is the bug solver and bug is fixed
+    usersSolvedBugs = Bug.objects.filter(poster__username=thisUser, fixed = True) #all the bugs this user poster which are fixed
+    thisUserCurrentBugs = Bug.objects.filter(poster = thisUser, fixed = False).exclude(status = 'solved')
+    thisUserSolving = Bug.objects.filter(bugSolver__user = thisUser, fixed = False)
+    solved = thisUser.bugsSolved.count()
+    posted = Bug.objects.filter(poster = thisUser).count()
+
+    return render(request, "bugtrack/profile.html", {
+        "posted": thisUserPostedBugs, "solved": thisUserSolvedBugs, "current": thisUserCurrentBugs, "user":thisUser, "solvednum": solved,
+        "postednum":posted, "solving":thisUserSolving
+    })
 
 @csrf_exempt
 def createBug(request):
@@ -107,7 +120,7 @@ def bugPage (request, bugId):
     #print(updates)
     
     if thisBug.solverBug.exists(): #if this bug has a solver, pass solver info into the template
-        solver = thisBug.solverBug.get() #get solver object
+        solver = thisBug.solverBug.filter().first() #get solver object
         solver = solver.serialiseSolver() #JSON it
     else:
         solver = None
@@ -167,6 +180,7 @@ def newUpdate(request): #update has to create new update object, add update to s
     thisBug.status = newStatus #updates the bug's status as per the dropdown menu
     thisBug.updates.add(newUpdate) #adds update to the solver object, should add updates to the bug 
     thisBug.save()
+    print(newStatus)
     if newStatus == 'solved':
         
         thisSolver.result = 'solved'
@@ -194,9 +208,13 @@ def bugSolved(request, bugId):
         return JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
     thisBug.fixed = True
     thisBug.status = 'finished'
+    solver = thisBug.bugSolver.user #gets the user who solved the bug
+    thisSolver = thisBug.bugSolver #gets this solver object
+    solver.bugsSolved.add(thisSolver) #adds this object to the bugs solved of the solving user
+    solver.save()
     print(thisBug.fixed)
     thisBug.save()
-    thisBug.bugSolver.user.bugsSolved +=1 #increment the bug solver's bugs solved by one
+    
     jsonBug = json.dumps(thisBug, default=str)
     return JsonResponse(jsonBug, safe=False)
 
@@ -225,6 +243,13 @@ def bugNotSolved(request, bugId):
     thisBug = json.dumps(thisBug, default=str)
     #create an update with the user and the reasontext
     return  JsonResponse(thisBug, safe=False) #solver not serialiseable
+
+def finishedBugList (request):
+    finishedBugs = Bug.objects.filter(fixed = True).order_by('-id') #all the bugs where user has said the solution worked
+    return render(request, "bugtrack/index.html", {
+        "bugList": finishedBugs, "header":'finishedBugs' #render a version of the index page, header is passed so main.js knows we only want fixed bugs
+        })
+
 
 
 

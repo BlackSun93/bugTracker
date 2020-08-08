@@ -1,6 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('loaded');
     document.getElementById('bugReportForm').onsubmit = createBug; 
+    try {
+      if (document.getElementById('header').dataset.header == 'finishedBugs') {
+      document.getElementById('bugReport').style.display = 'none';
+    }
+    }
+    catch {
+      console.log('You are on the normal index page and not finished bugs page');
+    }
+    
    
 });
 
