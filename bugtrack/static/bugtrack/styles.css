@@ -2,3 +2,40 @@ body {
     margin-left: 30px;
     margin-right: 20px;
 }
+
+.updateClass {
+    border: 3px solid lightgrey;
+    padding: 10px;
+    
+}
+
+#statusDivText {
+    font-size: medium;
+    font-weight: bold;
+    
+}
+
+.solvedUpdate {
+    border: 3px solid lightgrey;
+    padding: 10px;
+    background-color: palegreen;
+}
+
+.bugDesc {
+    background-color: lightcyan;
+}
+
+.updateComment {
+    text-align: right;
+    background-color: lightsalmon;
+}
+
+#bugInfoDiv {
+    background-color: lightcyan;
+}
+
+th , td {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+

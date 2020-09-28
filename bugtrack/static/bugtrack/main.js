@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('loaded');
+    bugForm = document.getElementById('bugReport');
+    document.getElementById('showReport').addEventListener('click', () => showReport());
     document.getElementById('bugReportForm').onsubmit = createBug; 
     try {
       if (document.getElementById('header').dataset.header == 'finishedBugs') {
@@ -9,9 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
     catch {
       console.log('You are on the normal index page and not finished bugs page');
     }
+    try {
+      bugForm.style.display = 'none';
+    }
+    catch {
+      console.log('You are on the normal index page and not finished bugs page');
+    }
     
    
 });
+
+function showReport() {
+  if ( bugForm.style.display == 'none'){
+    bugForm.style.display = 'block';
+  }
+  else {
+    bugForm.style.display = 'none';
+  }
+}
 
 function createBug() {
   const newBugTitle = document.getElementById('bugTitle').value;

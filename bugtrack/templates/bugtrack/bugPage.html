@@ -4,18 +4,28 @@
 
 
 <div id='bugObjectDiv' data-bug = "{{bug}}", data-user="{{request.user.id}}", data-solver="{{bug.bugSolver.user.id}}">
- <div id='solverButtonDiv'></div>
+
+    <div id='bugInfoDiv'>
+       <h3> {{bug.id}}  {{bug.title}} </h3> 
+       Posted by:<a href ="{% url 'profile' bug.poster.username %}">{{bug.poster}}</a> &nbsp;&nbsp;&nbsp;&nbsp; 
+       Bug's Solver: <a href ="{% url 'profile' bug.bugSolver.user.username %}">{{bug.bugSolver.user.username}}</a> &nbsp;&nbsp;&nbsp;&nbsp; 
+        <span id='statusDiv'> Current status: <span id='statusDivText'>{{bug.status}} </span></span>
+       <p> <div class='bugDesc'> {{bug.description}} </div>   </p> 
+      
+    </div>
+
+     <div id='solverButtonDiv'></div>
 
     <div id='ifNotFixedDiv'>
 
-           
-           <! <script> <!solverButton({{request.user.id}}) </script>>
+           <! <script> <!solverButton({{request.user.id}}) </script>
 
-            <h3> Should see this if bug is solved and logged in as the bug poster </h3>
-            Please read the solution and try it, if it works click the 'Bug solved!' button
+            <h6>A solution to this bug has been posted! Please read the solution and try it, if it works click the 'Bug solved!' button</h6>
+            
             <div id='solutionDiv'></div>
             <script>solution({{bug.id}}, {{request.user.id}} ) </script> 
-             <script> notSolution()</script>
+            <script> notSolution()</script>
+            <p> </p>
         <div id='notSolvedDiv'>
          <form id="notSolvedForm"> 
             <div class="form-group">
@@ -30,14 +40,8 @@
             <input type="submit" class="btn btn-primary"/>
         </form>
     </div>
-
-       
+ 
    </div> <! end of if not fixed div>
-    <div id='bugInfoDiv'>
-       <h3> {{bug.id}}  {{bug.title}} </h3>, <p> {{bug.description}} {{bug.bugSolver.user.username}} </p> 
-       <div id='statusDiv'> Current status: <div id='statusDivText'>{{bug.status}} </div></div>
-    </div>
-
    
     <div id='updateDiv'>
        <form id="updateForm"> 
@@ -55,16 +59,21 @@
         </form>
     </div>
        
- <div id='updateDiv'> </div> <! append updates to this div in js, outside of if because need to be able to post even if there were 0 updates>
+ <div id='updateDiv' > </div> <! append updates to this div in js, outside of if because need to be able to post even if there were 0 updates>
     {%if updates %}
         {% for update in updates %}
-        <div id='updateDiv{{update.id}}'>
-          
-            {{update.timestamp}} , {{update.text}}
-              {% if update.comment %}
-          <div id='commentDiv{{comment.id}}'> <p> The bugPoster commented on the solution: {{update.comment.text}} </p> </div>
-            {% endif %}
-        </div>
+            {% if update.status == 'solved'%}
+                    <div class = 'solvedUpdate' id='updateDiv{{update.id}}'> <!solved update class will have green background, new update model has
+                status field which is where .status comes from>
+            {% else %}
+                <div id='updateDiv{{update.id}}' class='updateClass'>
+            {% endif %} 
+
+                {{update.timestamp}} , {{update.text}}
+              {% if update.comment %} <! would be nice to not have this div extend the whole length of the window>
+             <div class='updateComment' id='commentDiv{{comment.id}}'> <p> The bugPoster commented on the solution: {{update.comment.text}} </p> </div>
+                {% endif %}
+</div>
         {% endfor %}
     {% endif %}
 

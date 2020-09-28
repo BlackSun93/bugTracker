@@ -27,9 +27,12 @@
                   <a class="nav-link" href="{% url 'finishedBugs' %}">Solved Bugs</a>
                 </li>
                 {% if user.is_authenticated %}
+                    <!{% if user.has_notification%}{% else %} {% endif %}>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'index' %}">TODO</a>
+                        <a class="nav-link" href="{% url 'notifications' %}" >Notifications</a>
                     </li>
+                  
+                   
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
                     </li>

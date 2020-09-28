@@ -6,23 +6,25 @@
     <div id='header' data-header='{{header}}'></div>
 {% endif %}
     {% if solvedList %}
-    <div id='solvedDiv'> Bugs you reported have been solved!
+    <div id='solvedDiv'> <h3> Bugs you reported have been solved! </h3> <p>
+    Please click on this bugs below, read the provided solution and update the bug accordingly if the solution did/ did not work. </p>
+    <p>TODO: decide if this style of listing bugs is nicer to look at than the table style used below. </p>
         {% for solved in solvedList %}
         <p>  <a href ="{% url 'bugPage' solved.id %}">  {{solved.id}} {{solved.title}}  {{solved.location}} {{solved.priority}} {{solved.status}}</a> </p>
         {% endfor %}  
     </div>
     {% endif %}
 
-
-<p> report a bug </p>
+<p> Found a bug? click the button, give the bug a title, a priority, tell us where the bug has been found and give it a description with this form </p>
+<button class= 'btn btn-success' id="showReport">Report a Bug</button>
 
  <div id="bugReport">
         <h3>Report a bug</h3>
         <form id="bugReportForm"> 
             <div class="form-group">
-                Title (short description of bug): <input id='bugTitle' class="form-control">
+                Title (short description of bug): <input id='bugTitle' class="form-control" placeholder="Title">
             </div>
-            <div class='form-group'>
+            <div class='form-group'>Priority:
             <select id='bugPriority' class='form-group' size='1'>
             
             <option value = 'low'>low </option>
@@ -34,15 +36,30 @@
                 Location: <input class="form-control" id="bugLocation" placeholder="Where was this bug enountered?">
             </div>
             <textarea class="form-control" id="bugDesc" placeholder="Detailed description of bug"></textarea>
-            <input type="submit" class="btn btn-primary"/>
+            <input type="submit" class="btn btn-primary" value="Report"/>
         </form>
     </div>
-
+{% if bugList %}
+<table id='bugTable'>
+    <tr>
+        <th> ID </th>
+        <th>TITLE </th>
+        <th>LOCATION </th>
+        <th>PRIORITY </th>
+        <th>STATUS </th>
+    </tr>    
 {% for bug in bugList%} <!Probably want this to be some kind of table to ensure information is separated neatly and is readable>
-
-  <p>  <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} {{bug.title}}  {{bug.location}} {{bug.priority}} {{bug.status}}</a> </p>
+<tr>
+    <th> <a href ="{% url 'bugPage' bug.id %}">  {{bug.id}} </a> </th>
+    <th><a href ="{% url 'bugPage' bug.id %}"> {{bug.title}}</a> </th>
+    <th>{{bug.location}} </th>
+    <th> {{bug.priority}} </th>
+    <th>{{bug.status}} </th>
+    
+ 
 
 {% endfor %}
+{% endif %}
 
 {% endblock %}
 {% block script %}

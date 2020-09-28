@@ -6,6 +6,8 @@ import datetime
 class User(AbstractUser):
     bugsPosted  = models.IntegerField(default=0)
     bugsSolved  = models.ManyToManyField("Solver", related_name='userSolved') #going to add to this whenever a bug is marked as fixed
+    #notifBug    = models.ForeignKey("Bug", on_delete=models.CASCADE, related_name='bugNotif')#if bug is deleted, delete its comments
+    
     def __str__(self):
         return f"{self.id} {self.username}"
     def SerialiseUser(self):
@@ -14,7 +16,7 @@ class User(AbstractUser):
         }   
 
 class Bug (models.Model):
-    poster      =  models.ForeignKey("User", on_delete=models.PROTECT,  related_name='bugPoster') #I dont want the poster to be able to be deleted if bug open
+    poster      = models.ForeignKey("User", on_delete=models.PROTECT,  related_name='bugPoster') #I dont want the poster to be able to be deleted if bug open
     status      = models.CharField(max_length=50) #will be in 1 of 5 states, unclaimed, claimed, processing, testing, solved
     priority    = models.CharField(max_length=10) #so the user can give the bug a presumed priority (low, med, high)
     title       = models.CharField(max_length=50) #brief description of the bug 
@@ -27,7 +29,9 @@ class Bug (models.Model):
     image       = models.ImageField() # bootstrap has class img-fluid
     score       = models.IntegerField(default=0)
     bugSolver   = models.ForeignKey("Solver", on_delete=models.SET_NULL, related_name='bugSolverBug', blank=True, null=True)
-    #if solver is deleted, set it to null
+    newNotif    = models.BooleanField(default=False)
+    
+    
     #no slugfield, being able to make a url based on an issue's id will probably impart as much information to a user as an out of context title
     def __str__(self):
         return f"Bug {self.id} from {self.poster}" #short representation because any of these fields could be potentially very long
@@ -114,6 +118,15 @@ class Update(models.Model): #the Solver will be able to post updates about the b
     text        = models.CharField(max_length=200)
     timestamp   = models.DateTimeField(auto_now_add=True)
     comment     = models.ForeignKey("UpdateComment", on_delete=models.CASCADE, related_name='updateComment', blank=True, null=True)
+    status      = models.CharField(max_length=50) #I need updates to be able to track what the status they're updating to is to change their
+    #background colour in html has been set to 'low' by default so dont be worried when you see this lol, maybe make this blank?
+    notifType   = models.CharField(max_length=50, blank=True, null=True, default='none') #will hold the most recent type of notification on a bug
+    #note that having a single notification type variable means that if multiple notifications are produced for one bug
+    # i.e, a bug gets a new solver (1 notif) and then an update is posted on this bug (2 notifs) the notification page will
+    #only show the update notification because the notification view function will just show bugs with an unread notif and 
+    #the html page will show the notification styled to the type of notif stored here
+    #types will be: none, noifSolver, notifUpdate, notifComment, notifFixed, notifSolverQuit
+    notifRead       = models.BooleanField(default=False)
     def __str__(self):
         try:
             return f"update #{self.id} from {self.solver.user.username} on bug {self.solver.bug.id}"
