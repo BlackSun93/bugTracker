@@ -15,7 +15,7 @@ from .models import *
 def index(request): 
     #default view should display all the bugs, so I will get them here and pass them into index.html
     #need to exclude bugs that have been taken on by someone (to prevent multiple users takng them on)
-    bugList = Bug.objects.all().order_by('id').exclude(status = 'solved').exclude(status='finished') #order bugs by reverse id (oldest bugs first) needs to exclude solved bugs
+    bugList = Bug.objects.all().order_by('id').filter(status = 'unclaimed') #order bugs by reverse id (oldest bugs first) needs to exclude solved bugs
     try:
         solvedBugsForUserReview = Bug.objects.filter(status = 'solved', poster = request.user, fixed = False ).order_by('-modified') 
         #if there are solved bugs that the user posted, render them at the top of the page in most recently solved first order
@@ -116,6 +116,12 @@ def createBug(request):
 def bugPage (request, bugId):
     thisBug = Bug.objects.get(id=bugId)
     updates = thisBug.updates.all().order_by('-id')
+    if request.user == thisBug.poster: #this means notifications will only set to read if the bug's poster looks at the page
+        for update in updates:
+            update.notifRead = True
+            update.save() #when a bug's page is opened, it iterates through all the updates and sets them all to read
+        #I've done it this way because there could potentially be many updates on one bug and it makes sense that once the bugpage is opened
+        #the user will be able to see all of the updates
     #print(thisBug.updates)
     #print(updates)
     
@@ -127,9 +133,15 @@ def bugPage (request, bugId):
     jsBug = thisBug.serialiseBug() #JSON the bug
     jsBug = json.dumps(jsBug, default=str)
     print(thisBug.bugSolver)
-    return render(request, "bugtrack/bugPage.html", {
-        "bug": thisBug, "jsBug":jsBug,  "solver" : solver, "updates": updates
-    })
+    try:
+        return render(request, "bugtrack/bugPage.html", {
+         "bug": thisBug, "jsBug":jsBug,  "solver" : solver, "updates": updates
+        })
+    except:
+        return render(request, "bugtrack/bugPage.html", {
+         "bug": thisBug, "jsBug":jsBug,  "solver" : solver
+        })
+
 
     #else: #if this bug doesn't have a solver yet
     #    jsBug = thisBug.serialiseBug()
@@ -148,12 +160,21 @@ def newSolver (request):
     
     thisBug = Bug.objects.get(id=bugId)
     thisUser = User.objects.get(id=userId)
+    #thisBug.poster.notification = True #notifies the bug's poster (as a bug they posted now has a solver)
+    #thisBug.poster.notifType = 'notifSolver'
+    #thisBug.poster.save()
     print(thisBug)
     print(thisUser)
     newSolver = Solver(user=thisUser, bug=thisBug)
+    
     newSolver.save()
+    newUpdate = Update(solver = newSolver, notifRead=False, notifType='notifSolver')
+    newUpdate.save()
+    thisBug.updates.add(newUpdate)
     thisBug.status = 'claimed'
     thisBug.bugSolver = newSolver
+    #thisBug.notifType = 'notifSolver'
+    thisBug.newNotif = True
     thisBug.save()
     print(newSolver)
     jsonBug = json.dumps(thisBug, default=str)
@@ -175,22 +196,41 @@ def newUpdate(request): #update has to create new update object, add update to s
     
     ##### UPDATE OBJECTS ######
     #addUpdate(newUpdate, thisBug, thisSolver)
-    newUpdate = Update(solver = thisSolver, text = update) #create update object
+    newUpdate = Update(solver = thisSolver, text = update, notifRead=False, notifType='notifUpdate') #create update object
     newUpdate.save()
     thisBug.status = newStatus #updates the bug's status as per the dropdown menu
     thisBug.updates.add(newUpdate) #adds update to the solver object, should add updates to the bug 
+    print(newUpdate)
+    #thisBug.poster.notification = True
+    #thisBug.poster.notifType = 'notifUpdate'
+    #thisBug.poster.save()
+    thisBug.newNotif = True
     thisBug.save()
     print(newStatus)
-    if newStatus == 'solved':
-        
+    if newStatus == 'solved': #set update's status to solved here?
+        newUpdate.status = 'solved'
+        newUpdate.notifRead = False
+        newUpdate.notifType = 'notifSolved'
+        newUpdate.save() #this only changes the update status if it's solved
         thisSolver.result = 'solved'
-        thisUser = thisSolver.user
-        #thisUser.bugsSolved += 1 #increment user's solved bug count
-        thisUser.save()
+        print(newUpdate)
+        print(newUpdate.notifType)
+        #thisBug.poster.notification = True
+       # thisBug.poster.notifType = 'notifSolved'
+       # thisBug.poster.save()
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
 
     elif newStatus == 'unclaimed':
+       
+       # thisBug.poster.notifType = 'notifSolverQuit'
+       # thisBug.poster.notification = True
+      #  thisBug.poster.save()
+        newUpdate.notifRead = False
+        newUpdate.notifType = 'notifSolverQuit'
+        newUpdate.save() #this only changes the update status if it's solved
         thisSolver.delete() # have to clear the solver object
+        print(newUpdate)
+        print(newUpdate.notifType)
         print("solver deleted")
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
 
@@ -198,6 +238,7 @@ def newUpdate(request): #update has to create new update object, add update to s
         print(newUpdate)
         print(thisBug.updates.all())
         return JsonResponse([newUpdate.serialiseUpdate()], safe=False)
+
 @csrf_exempt
 def bugSolved(request, bugId):
     data = json.loads(request.body)
@@ -208,11 +249,19 @@ def bugSolved(request, bugId):
         return JsonResponse({"message": "You are not the user who posted this bug"}, status=201)
     thisBug.fixed = True
     thisBug.status = 'finished'
+    
+    #thisBug.poster.notifType = 'notifFixed'
+   # thisBug.poster.notification = True
+    #thisBug.poster.save()
     solver = thisBug.bugSolver.user #gets the user who solved the bug
     thisSolver = thisBug.bugSolver #gets this solver object
     solver.bugsSolved.add(thisSolver) #adds this object to the bugs solved of the solving user
     solver.save()
     print(thisBug.fixed)
+    newUpdate = Update(solver = thisSolver, notifRead=False, notifType='notifFixed')
+    newUpdate.save()
+    thisBug.updates.add(newUpdate)
+    thisBug.newNotif = True
     thisBug.save()
     
     jsonBug = json.dumps(thisBug, default=str)
@@ -232,9 +281,18 @@ def bugNotSolved(request, bugId):
     reasonText = data.get('reasonText')
     thisBug = Bug.objects.get(id=bugId) #the solved bug
     thisBug.status = updateStatus
+    thisSolver = thisBug.bugSolver
+    newUpdate = Update(solver = thisSolver, notifRead=False, notifType='notifNotSolved') #makes an update to say the bug wasn't solved
+    newUpdate.save()
+    thisBug.updates.add(newUpdate)
+    thisBug.newNotif = True
+    
     thisBug.save()
+   # thisBug.poster.notification = True
+   # thisBug.poster.notifType = 'notifUpdate'
+   # thisBug.poster.save()
     #need to find most recent update (as last update will be when the bug was solved)
-    lastUpdate = thisBug.updates.last()
+    lastUpdate = thisBug.updates.filter(notifType='notifUpdate').first() #needs to be the last 
     newUpdateComment = UpdateComment(user = thisUser, update = lastUpdate, text = reasonText)
     
     newUpdateComment.save()
@@ -250,6 +308,37 @@ def finishedBugList (request):
         "bugList": finishedBugs, "header":'finishedBugs' #render a version of the index page, header is passed so main.js knows we only want fixed bugs
         })
 
+def notifications (request):
+    thisUser = request.user
+    #bugsUserPosted = Bug.objects.filter(poster = thisUser)
+    unreadBugs = Bug.objects.filter(newNotif= True, poster = thisUser).order_by('-modified') # will get all the bugs with unread notifications on them
+    #could even sort the notification types on this side - BUT cant sort by time order if they are sorted here
+    #firstNotif = unreadNotifs.first()
+    print(unreadBugs)
+    #print(firstNotif.updates.all())
+    #firstUp = firstNotif.updates.first()
+   # print(firstUp.notifType)
+
+    updates = Update.objects.filter(notifRead= False, solver__bug__poster = thisUser)
+    
+    print(updates)
+    
+    #for bug in unreadBugs.all():
+    #    updates = bug.updates.all()
+    #    print(updates) #gets and stores 1 bug's updates
+    
+
+    return render(request, "bugtrack/notifications.html" , {
+            "notifications": updates
+        })
+
+#def notificationPage (request):
+    #have to get all updates for bugs this user has posted
+    #find some way to alert user to this section if there is something not read by this user, might have to add a  'read by user' var to class
+    #would add this in model for updates
+ #   return render(request, "bugtrack/notification.html", {
+
+#    })
 
 
 

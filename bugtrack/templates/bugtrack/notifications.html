@@ -1,0 +1,62 @@
+{% extends "bugtrack/layout.html" %}
+{% load static %}
+
+{% block body%}
+
+{% if notifications%}
+
+{% for test in notifications %}
+   X
+   {{test.notifType}}
+
+    
+
+{% endfor %}
+
+TEST
+{% for notif in notifications %}
+{% if notif.notifType == 'notifSolver'%}
+<p> <a href ="{% url 'profile' notif.solver.user.username %}">{{notif.solver.user }}</a> Has become the solver for  <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a>
+</p>
+{% endif %}
+
+{% if notif.notifType == 'notifSolved'%}
+<p> <a href ="{% url 'profile' notif.solver.user.username %}">{{notif.solver.user }}</a> Has marked  <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a> as solved, please check the solution!
+</p>
+{% endif %}
+
+{% if notif.notifType == 'notifUpdate'%}
+<p> <a href ="{% url 'profile' notif.solver.user.username %}">{{notif.solver.user }} </a> posted an update on <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a>: {{notif.text}}
+</p>
+{% endif %}
+
+{% if notif.notifType == 'notifComment'%}
+<p> A comment has been left on an update you posted on <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a>
+</p>
+{% endif %}
+
+{% if notif.notifType == 'notifSolverQuit'%}
+<p> <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a> No longer has a solver
+</p>
+{% endif %}
+
+{% if notif.notifType == 'notifFixed'%}
+<p> <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a> Has been marked as fixed!
+</p>
+{% endif %}
+
+{% if notif.notifType == 'notifNotSolved'%}
+<p>Your solution on <a href ="{% url 'bugPage' notif.solver.bug.id %}">{{notif.solver.bug}} </a> Was marked as 'not solved'
+</p>
+{% endif %}
+
+{% endfor %}
+<!{% else %}>
+
+
+{% endif %}
+
+{% endblock %}
+{% block script %}
+<!script src="{% static 'bugtrack/main.js' %}"><!/script>
+{% endblock %}

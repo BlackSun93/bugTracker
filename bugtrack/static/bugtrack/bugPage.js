@@ -14,7 +14,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateForm').style.display = 'none';
     //document.getElementById('updateForm').style.display = 'block';
     visibilityChecks();
-        
+
+    /*var updateStyle = document.querySelectorAll('updateClass');
+
+    for (var i = 0; i < updateStyle.length; i++) {
+        update = updateStyle[i];
+        update.style.border = "solid"
+    } */
+  
     /*
     if (currentUser == solver) {
         document.getElementById('updateForm').style.display = 'block';
