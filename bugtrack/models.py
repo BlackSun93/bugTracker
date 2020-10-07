@@ -5,8 +5,9 @@ import datetime
 
 class User(AbstractUser):
     bugsPosted  = models.IntegerField(default=0)
-    bugsSolved  = models.ManyToManyField("Solver", related_name='userSolved') #going to add to this whenever a bug is marked as fixed
+    bugsSolved  = models.ForeignKey("Solver", on_delete=models.PROTECT, blank=True, null=True, related_name='userSolved') #going to add to this whenever a bug is marked as fixed : needs to be FK
     #notifBug    = models.ForeignKey("Bug", on_delete=models.CASCADE, related_name='bugNotif')#if bug is deleted, delete its comments
+    #bugsSolved can be replaced with a query for Solver WHERE Solver.user == thisUser AND Solver.bug.status = 'fixed', no need for a solved attribute
     
     def __str__(self):
         return f"{self.id} {self.username}"
@@ -22,7 +23,10 @@ class Bug (models.Model):
     title       = models.CharField(max_length=50) #brief description of the bug 
     description = models.CharField(max_length=500) # full description of the issue
     location    = models.CharField( max_length=50) #where the issue is located (file, program)
-    updates     = models.ManyToManyField("Update", related_name='bugUpdate') #should allow many updates to made by one solver
+    ##############################################################
+    updates     = models.ForeignKey("Update", on_delete=models.CASCADE, related_name='bugUpdate' , blank=True, null=True) #should allow many updates to made by one solver: this needs to be a foreignkey
+    #################################################################
+    #replace bug.updates with Updates.objects.filter(bug = thisBug)
     fixed       = models.BooleanField(default=False)
     created     = models.DateTimeField(editable=False)
     modified    = models.DateTimeField( blank=True, null=True)
@@ -91,6 +95,7 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
     action      = models.CharField(max_length=500, blank=True, null=True) #field to allow a bug fix to be supplied, allowing it as null here but expect a
                                                                 #check in html to not actually pass a blank value (this is the fix so why is it null?)
     result      = models.CharField(max_length=500, blank=True, null=True) #result can be blank in case of awaiting result/ etc
+    #updates = models.ForeignKey("UpdateObjects", on_delete=models.SET_NULL, null=True, related_name='solverUpdates') see prototype below
 
     def __str__(self):
         return f"{self.user.username}" #edited because the username of solver is enough info
@@ -106,6 +111,12 @@ class Solver (models.Model): #gives a 1-1 relationship of a user and a bug they 
             self.created = timezone.now()
         self.modified = timezone.now()
         return super(Solver, self).save(*args, **kwargs)
+
+#class UpdateObjects(Models.model):
+#   update = models.ForeignKey("Update", on_delete=models.SET_NULL, null=True, related_name='updateObject')
+#   solver = models.ForeignKey("Solver", on_delete=models.SET_NULL, null=True, related_name='solverUpdate')
+#this is how we're being taught to resolve the many-many issue with an intermediate linker class however I dont see the practical benefit
+#as I can find updates on a bug fine without this.
     
 
 class Update(models.Model): #the Solver will be able to post updates about the bug (if user is solver of this bug then x, y)
@@ -145,7 +156,7 @@ class UpdateComment (models.Model):
     user        = models.ForeignKey("User", on_delete=models.CASCADE)
     text        = models.CharField(max_length=200)
     def __str__(self):
-        return f"Comment on update {self.update.id}, bug {self.update.solver.bug} From {self.user.username}"
+        return f"Comment on update {self.update.id},  From {self.user.username}"
     def serialiseUpdateComment(self):
         return{
             "id": self.id,

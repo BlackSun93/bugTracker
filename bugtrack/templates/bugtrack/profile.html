@@ -6,7 +6,11 @@
 <h2> {{user.username}}'s profile page </h2>
 <! maybe do something similar to email's mailbox tabs to display these divs >
 <p>Some info on user, problems posted, solved, current bugs solving / found </p>
+{% if solvednum %}
 <p> {{solvednum}} bugs solved, {{postednum}} bugs posted </p>
+{% else %}
+<p>No bugs solved yet, {{postednum}} bugs posted </p>
+{% endif %}
 
     <button class="btn btn-sm btn-outline-primary" id="current">Currently Solving</button>
     <button class="btn btn-sm btn-outline-primary" id="solved">Bugs Solved</button>

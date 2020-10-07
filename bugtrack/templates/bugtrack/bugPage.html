@@ -8,8 +8,13 @@
     <div id='bugInfoDiv'>
        <h3> {{bug.id}}  {{bug.title}} </h3> 
        Posted by:<a href ="{% url 'profile' bug.poster.username %}">{{bug.poster}}</a> &nbsp;&nbsp;&nbsp;&nbsp; 
+       {% if bug.bugSolver  %}
        Bug's Solver: <a href ="{% url 'profile' bug.bugSolver.user.username %}">{{bug.bugSolver.user.username}}</a> &nbsp;&nbsp;&nbsp;&nbsp; 
         <span id='statusDiv'> Current status: <span id='statusDivText'>{{bug.status}} </span></span>
+        {% else %}
+            Bug's Solver: None, become the bug's solver with the button above &nbsp;&nbsp;&nbsp;&nbsp; 
+        <span id='statusDiv'> Current status: <span id='statusDivText'>{{bug.status}} </span></span>
+        {% endif %}
        <p> <div class='bugDesc'> {{bug.description}} </div>   </p> 
       
     </div>
@@ -60,9 +65,9 @@
     </div>
        
  <div id='updateDiv' > </div> <! append updates to this div in js, outside of if because need to be able to post even if there were 0 updates>
-    {%if updates %}
+    {% if updates %}
         {% for update in updates %}
-            {% if update.status == 'solved'%}
+            {% if update.status == 'solved' %}
                     <div class = 'solvedUpdate' id='updateDiv{{update.id}}'> <!solved update class will have green background, new update model has
                 status field which is where .status comes from>
             {% else %}

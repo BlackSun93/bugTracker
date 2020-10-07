@@ -75,7 +75,7 @@ function visibilityChecks() {
        
         document.getElementById('updateForm').style.display = 'block';
     }
-    if (bugJson.status == 'unclaimed') {
+    if (bugJson.status == 'unclaimed') { //this causes an issue if for some reason bug is processing wih no solver
         
         solverButton(currentUser);
     }
@@ -119,8 +119,6 @@ function solverButton(userId){ //should standardise whether or not to make eleme
     })
     buttonDiv.append(button);
 }
-
-
 
 function createUpdate() {
     alert("A");
